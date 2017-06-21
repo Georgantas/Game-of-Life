@@ -86,11 +86,15 @@ class GameOfLife:
             if count <= 1:
                 return False
             elif count <= 3:
+                print(self.board)
+                print(coordinates_to_check, "through if")
                 return True
             else:
                 return False
         else:
             if count == 3:
+                print(self.board)
+                print(coordinates_to_check, "through else")
                 return True
             else:
                 return False
@@ -102,17 +106,17 @@ class GameOfLife:
         # canvas['state'] = 'disabled'
         # while(True):
         for yIdx, y in enumerate(self.board):
-            for xIdx, x in enumerate(self.board):
+            for xIdx, x in enumerate(y):
                 self.tmpBoard[yIdx][xIdx][1] = self.outcome(xIdx, yIdx, x[1])
         self.board = self.tmpBoard
+        print(self.board)
         self.draw_board()
-        time.sleep(self.delay)
+        # time.sleep(self.delay)
 
-
-    def stop_animation():
-        board = deepcopy(initialBoard)
-        canvas['state'] = 'normal'
-        draw_board(canvas)
+    def stop_animation(self):
+        self.board = deepcopy(self.initialBoard)
+        self.canvas['state'] = 'normal'
+        self.draw_board()
 
     def switch_block(self, event):
         closest_rectangle_id = event.widget.find_closest(event.x, event.y)[0]
