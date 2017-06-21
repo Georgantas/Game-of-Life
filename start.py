@@ -23,6 +23,7 @@ import time
 class GameOfLife:
 
     def __init__(self, root, width, height, s_width, s_height, delay):
+        self.stop_id = 0
         self.delay = delay
         self.board = []
         self.initialBoard = deepcopy(self.board)
@@ -39,7 +40,7 @@ class GameOfLife:
 
         menu = Menu(master)
         file_menu = Menu(menu, tearoff=0)
-        file_menu.add_command(label="Start", command=self.begin_animation)
+        file_menu.add_command(label="Start", command=self.initialize_animation)
         file_menu.add_command(label="Stop", command=self.stop_animation)
         menu.add_cascade(label="File", menu=file_menu)
         master.config(menu=menu)
@@ -86,36 +87,31 @@ class GameOfLife:
             if count <= 1:
                 return False
             elif count <= 3:
-                print(self.board)
-                print(coordinates_to_check, "through if")
                 return True
             else:
                 return False
         else:
             if count == 3:
-                print(self.board)
-                print(coordinates_to_check, "through else")
                 return True
             else:
                 return False
 
-# TODO: Finish.
     def begin_animation(self):
-        self.initialBoard = deepcopy(self.board)
-        self.tmpBoard = deepcopy(self.board)
-        # canvas['state'] = 'disabled'
-        # while(True):
         for yIdx, y in enumerate(self.board):
             for xIdx, x in enumerate(y):
                 self.tmpBoard[yIdx][xIdx][1] = self.outcome(xIdx, yIdx, x[1])
         self.board = self.tmpBoard
-        print(self.board)
         self.draw_board()
-        # time.sleep(self.delay)
+        self.stop_id = self.canvas.after(self.delay, self.begin_animation)
+
+    def initialize_animation(self):
+        self.initialBoard = deepcopy(self.board)
+        self.tmpBoard = deepcopy(self.board)
+        self.begin_animation()
 
     def stop_animation(self):
+        self.board = self.canvas.after_cancel(self.stop_id)
         self.board = deepcopy(self.initialBoard)
-        self.canvas['state'] = 'normal'
         self.draw_board()
 
     def switch_block(self, event):
@@ -127,5 +123,5 @@ class GameOfLife:
         self.draw_board()
 
 master = Tk()
-game = GameOfLife(master, 600, 600, 10, 10, 2)
+game = GameOfLife(master, 600, 600, 10, 10, 750)
 master.mainloop()
