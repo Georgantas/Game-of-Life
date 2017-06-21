@@ -14,67 +14,114 @@
 # TScrollbar, TSpinbox, Treeview
 
 from tkinter import *
+from copy import deepcopy
 import math
+import numpy
+import time
 
-def begin_animation():
-    canvas['state'] = 'disabled'
 
-def stop_animation():
-    canvas['state'] = 'normal'
+class GameOfLife:
 
-def switch_block(event):
-    closestRectangleId = event.widget.find_closest(event.x, event.y)[0]
-    for y in board:
-        for x in y:
-            if x[0] == closestRectangleId:
-                if x[1] == 0:
-                    x[1] = 1
-                    event.widget.itemconfig(closestRectangleId,
-                                            fill="black")
+    def __init__(self, root, width, height, s_width, s_height, delay):
+        self.delay = delay
+        self.board = []
+        self.initialBoard = deepcopy(self.board)
+        self.tmpBoard = deepcopy(self.board)
+        self.master = root
+        master.title("The Game of Life")
+        master.resizable(width=False, height=False)
+
+        self.canvas = Canvas(master,
+                             width=width,
+                             height=height,
+                             borderwidth=0)
+        self.canvas.pack()
+
+        menu = Menu(master)
+        file_menu = Menu(menu, tearoff=0)
+        file_menu.add_command(label="Start", command=self.begin_animation)
+        file_menu.add_command(label="Stop", command=self.stop_animation)
+        menu.add_cascade(label="File", menu=file_menu)
+        master.config(menu=menu)
+
+        for y in range(0, math.floor(width / s_width)):
+            self.board.append([])
+            for x in range(0, math.floor(height / s_height)):
+                rectangle_id = self.canvas.create_rectangle(x * s_width,
+                                                            y * s_height,
+                                                            (x + 1) * s_width,
+                                                            (y + 1) * s_height,
+                                                            fill="white",
+                                                            outline="")
+                self.board[y].append([rectangle_id, False])
+                self.canvas.tag_bind(rectangle_id, '<ButtonPress-1>', self.switch_block)
+
+    def draw_board(self):
+        for y in self.board:
+            for x in y:
+                if x[1]:
+                    self.canvas.itemconfig(x[0], fill="black")
                 else:
-                    x[1] = 0
-                    event.widget.itemconfig(closestRectangleId,
-                                            fill="white")
+                    self.canvas.itemconfig(x[0], fill="white")
+
+    def outcome(self, x, y, value):
+        count = 0
+        coordinates_to_check = numpy.squeeze(numpy.asarray(numpy.matrix([[-1, -1],
+                                                                         [0, -1],
+                                                                         [1, -1],
+                                                                         [-1, 0],
+                                                                         [1, 0],
+                                                                         [-1, 1],
+                                                                         [0, 1],
+                                                                         [1, 1]]) + numpy.matrix([[x, y]] * 8)))
+
+        for coord in coordinates_to_check:
+            try:
+                if self.board[coord[1]][coord[0]][1]:
+                    count += 1
+            except IndexError:
+                pass
+
+        if value:
+            if count <= 1:
+                return False
+            elif count <= 3:
+                return True
+            else:
+                return False
+        else:
+            if count == 3:
+                return True
+            else:
+                return False
+
+# TODO: Finish.
+    def begin_animation(self):
+        self.initialBoard = deepcopy(self.board)
+        self.tmpBoard = deepcopy(self.board)
+        # canvas['state'] = 'disabled'
+        # while(True):
+        for yIdx, y in enumerate(self.board):
+            for xIdx, x in enumerate(self.board):
+                self.tmpBoard[yIdx][xIdx][1] = self.outcome(xIdx, yIdx, x[1])
+        self.board = self.tmpBoard
+        self.draw_board()
+        time.sleep(self.delay)
 
 
-CANVAS_WIDTH = 600
-CANVAS_HEIGHT = 600
+    def stop_animation():
+        board = deepcopy(initialBoard)
+        canvas['state'] = 'normal'
+        draw_board(canvas)
 
-SQUARE_WIDTH = 10
-SQUARE_HEIGHT = 10
-
-board = []
+    def switch_block(self, event):
+        closest_rectangle_id = event.widget.find_closest(event.x, event.y)[0]
+        for y in self.board:
+            for x in y:
+                if x[0] == closest_rectangle_id:
+                    x[1] = not x[1]
+        self.draw_board()
 
 master = Tk()
-master.wm_title("The Game of Life")
-master.resizable(width=False, height=False)
-
-menu = Menu(master)
-file_menu = Menu(menu, tearoff=0)
-file_menu.add_command(label="Start", command=begin_animation)
-file_menu.add_command(label="Stop", command=stop_animation)
-menu.add_cascade(label="File", menu=file_menu)
-master.config(menu=menu)
-
-
-canvas = Canvas(master,
-                width=CANVAS_WIDTH,
-                height=CANVAS_HEIGHT,
-                borderwidth=0)
-canvas.pack()
-
-for y in range(0, math.floor(CANVAS_WIDTH / SQUARE_WIDTH)):
-    board.append([])
-    for x in range(0, math.floor(CANVAS_HEIGHT / SQUARE_HEIGHT)):
-        rectangle_id = canvas.create_rectangle(x * SQUARE_WIDTH,
-                                               y * SQUARE_HEIGHT,
-                                               (x + 1) * SQUARE_WIDTH,
-                                               (y + 1) * SQUARE_HEIGHT,
-                                               fill="white",
-                                               outline="")
-        board[y].append([rectangle_id, 0])
-        canvas.tag_bind(rectangle_id, '<ButtonPress-1>', switch_block)
-
-
+game = GameOfLife(master, 600, 600, 10, 10, 2)
 master.mainloop()
-
