@@ -100,7 +100,7 @@ class GameOfLife:
         for yIdx, y in enumerate(self.board):
             for xIdx, x in enumerate(y):
                 self.tmpBoard[yIdx][xIdx][1] = self.outcome(xIdx, yIdx, x[1])
-        self.board = self.tmpBoard
+        self.board = deepcopy(self.tmpBoard)
         self.draw_board()
         self.stop_id = self.canvas.after(self.delay, self.begin_animation)
 
@@ -123,5 +123,5 @@ class GameOfLife:
         self.draw_board()
 
 master = Tk()
-game = GameOfLife(master, 600, 600, 10, 10, 750)
+game = GameOfLife(master, 600, 600, 10, 10, 400)
 master.mainloop()
